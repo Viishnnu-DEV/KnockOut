@@ -187,7 +187,7 @@ function getMatchStatus(match) {
   return { label: 'FT', color: '#555' };
 }
 
-const API_BASE = import.meta.env.DEV ? '/api' : 'http://worldcup26.ir:3050';
+const API_BASE = '/api';
 
 const authenticateUser = async () => {
   try {
