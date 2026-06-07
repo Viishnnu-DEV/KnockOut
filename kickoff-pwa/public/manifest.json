@@ -1,0 +1,100 @@
+{
+  "name": "KICKOFF IST — FIFA World Cup 2026",
+  "short_name": "KICKOFF IST",
+  "description": "All 104 FIFA World Cup 2026 matches in Indian Standard Time. Live scores, reminders & more.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050508",
+  "theme_color": "#00FF87",
+  "categories": ["sports", "news"],
+  "lang": "en-IN",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Match Schedule in IST"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Matches",
+      "short_name": "Today",
+      "description": "View today's World Cup matches in IST",
+      "url": "/?view=today",
+      "icons": [{ "src": "/icons/shortcut-today.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Teams",
+      "short_name": "My Teams",
+      "description": "View your starred teams' matches",
+      "url": "/?view=myteams",
+      "icons": [{ "src": "/icons/shortcut-teams.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Live Now",
+      "short_name": "Live",
+      "description": "Currently live World Cup matches",
+      "url": "/?view=live",
+      "icons": [{ "src": "/icons/shortcut-live.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}
