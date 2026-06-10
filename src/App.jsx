@@ -48,6 +48,7 @@ import { FanVerdictLeaderboard } from './components/FanPoll';
 import ISTSleepAlert from './components/ISTSleepAlert';
 import StoryCardGenerator from './components/StoryCardGenerator';
 import PWAManager from './components/PWAManager';
+import GlobalChat from './components/GlobalChat';
 import TimezoneSelector from './components/TimezoneSelector';
 import KnockoutBracket from './components/KnockoutBracket';
 import { useCachedMatches, idbSet } from './hooks/useIndexedDB';
@@ -619,52 +620,48 @@ export default function App() {
   // --- Live Score Auto-Refresh Effect ---
   useEffect(() => {
     const interval = setInterval(async () => {
+      let updatedMatches = [...matchesData];
+      
       const liveMatches = matchesData.filter(m => {
         const status = getMatchStatus(m);
         return status.label === 'LIVE';
       });
       
-      if (!liveMatches.length) return;
-      
       let token = localStorage.getItem('kickoff_token');
-      if (!token) return;
       
-      try {
-        const updatedMatches = [...matchesData];
-        let hasChanges = false;
-        
-        for (const match of liveMatches) {
-          const res = await fetch(`${API_BASE}/get/game/${match._id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const gameData = await res.json();
-            const apiMatch = gameData.game || gameData;
-            if (apiMatch) {
-              const idx = updatedMatches.findIndex(m => m.id === match.id);
-              if (idx !== -1) {
-                const homeScore = apiMatch.home_score !== 'null' && apiMatch.home_score !== null ? Number(apiMatch.home_score) : null;
-                const awayScore = apiMatch.away_score !== 'null' && apiMatch.away_score !== null ? Number(apiMatch.away_score) : null;
-                const finished = apiMatch.finished === 'TRUE' || apiMatch.finished === true;
-                
-                updatedMatches[idx] = {
-                  ...updatedMatches[idx],
-                  home_score: homeScore,
-                  away_score: awayScore,
-                  finished
-                };
-                hasChanges = true;
+      if (token && liveMatches.length > 0) {
+        try {
+          for (const match of liveMatches) {
+            const res = await fetch(`${API_BASE}/get/game/${match._id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              const gameData = await res.json();
+              const apiMatch = gameData.game || gameData;
+              if (apiMatch) {
+                const idx = updatedMatches.findIndex(m => m.id === match.id);
+                if (idx !== -1) {
+                  const homeScore = apiMatch.home_score !== 'null' && apiMatch.home_score !== null ? Number(apiMatch.home_score) : null;
+                  const awayScore = apiMatch.away_score !== 'null' && apiMatch.away_score !== null ? Number(apiMatch.away_score) : null;
+                  const finished = apiMatch.finished === 'TRUE' || apiMatch.finished === true;
+                  
+                  updatedMatches[idx] = {
+                    ...updatedMatches[idx],
+                    home_score: homeScore,
+                    away_score: awayScore,
+                    finished
+                  };
+                }
               }
             }
           }
+        } catch (err) {
+          console.error("Failed to auto-refresh live scores:", err);
         }
-        
-        if (hasChanges) {
-          setMatchesData(updatedMatches);
-        }
-      } catch (err) {
-        console.error("Failed to auto-refresh live scores:", err);
       }
+      
+      // Always trigger a state update to force re-render of time-based UI (Upcoming -> Live)
+      setMatchesData(updatedMatches);
     }, 60000);
     
     return () => clearInterval(interval);
@@ -2477,6 +2474,7 @@ export default function App() {
       </footer>
 
       <ReminderPopup matches={matchesData} teamMap={{}} />
+      <GlobalChat matches={matchesData} isDark={isDark} />
     </div>
   );
 }
