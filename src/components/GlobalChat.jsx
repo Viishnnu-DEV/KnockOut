@@ -5,7 +5,7 @@ import { ChatCircleDots, X, PaperPlaneRight, Globe, Fire, WarningCircle } from '
 import { getUserChatIdentity, cleanMessage } from '../utils/chatUtils';
 import { getMatchStatus } from '../matchData';
 
-const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+const FIFTEEN_MINUTES = 15 * 60 * 1000;
 const COOLDOWN_MS = 15000;
 
 export default function GlobalChat({ matches, isDark }) {
@@ -17,7 +17,14 @@ export default function GlobalChat({ matches, isDark }) {
   const [cooldownLeft, setCooldownLeft] = useState(0);
   
   const messagesEndRef = useRef(null);
-  const identity = useRef(getUserChatIdentity());
+  const [identity] = useState(() => getUserChatIdentity());
+
+  // Listen for global open event
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-chat', handleOpen);
+    return () => window.removeEventListener('open-chat', handleOpen);
+  }, []);
 
   // Find if there's any LIVE match
   const liveMatch = matches?.find(m => getMatchStatus(m).label === 'LIVE');
@@ -40,8 +47,8 @@ export default function GlobalChat({ matches, isDark }) {
         const now = Date.now();
         const loadedMessages = Object.entries(data)
           .map(([key, val]) => ({ id: key, ...val }))
-          // Client-side 24h TTL filter
-          .filter(msg => !msg.timestamp || (now - msg.timestamp < TWENTY_FOUR_HOURS))
+          // Client-side 15m TTL filter
+          .filter(msg => !msg.timestamp || (now - msg.timestamp < FIFTEEN_MINUTES))
           .sort((a, b) => a.timestamp - b.timestamp);
         
         setMessages(loadedMessages);
@@ -84,8 +91,8 @@ export default function GlobalChat({ matches, isDark }) {
 
     try {
       await push(chatRef, {
-        nickname: identity.current.nickname,
-        flag: identity.current.flag,
+        nickname: identity.nickname,
+        flag: identity.flag,
         text: cleanedText,
         timestamp: serverTimestamp()
       });
@@ -105,20 +112,10 @@ export default function GlobalChat({ matches, isDark }) {
 
   return (
     <>
-      {/* Floating Action Button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 rounded-full bg-[#fcb900] text-[#10164f] flex items-center justify-center shadow-[0_10px_30px_rgba(252,185,0,0.4)] hover:scale-110 transition-transform z-[100]"
-        >
-          <ChatCircleDots size={28} weight="fill" />
-        </button>
-      )}
-
       {/* Chat Modal */}
       {isOpen && (
         <div 
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-32px)] sm:w-[380px] h-[550px] max-h-[80vh] rounded-2xl flex flex-col shadow-2xl z-[100] theme-transition animate-fadein"
+          className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-32px)] sm:w-[380px] h-[550px] max-h-[75vh] rounded-2xl flex flex-col shadow-2xl z-[100] theme-transition animate-fadein"
           style={{
             background: bgStyle,
             border: `1px solid ${borderStyle}`,
@@ -129,10 +126,10 @@ export default function GlobalChat({ matches, isDark }) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: borderStyle }}>
             <div className="flex items-center gap-2">
-              <span className="text-xl">{identity.current.flag}</span>
+              <span className="text-xl">{identity.flag}</span>
               <div className="flex flex-col">
                 <span className="font-bold text-sm tracking-wide" style={{ fontFamily: '"FWC26", sans-serif' }}>Fan Zone</span>
-                <span className="text-[10px] uppercase" style={{ color: subTextStyle }}>{identity.current.nickname}</span>
+                <span className="text-[10px] uppercase" style={{ color: subTextStyle }}>{identity.nickname}</span>
               </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="opacity-50 hover:opacity-100 transition-opacity p-1">
@@ -174,7 +171,7 @@ export default function GlobalChat({ matches, isDark }) {
               </div>
             ) : (
               messages.map(msg => {
-                const isMe = msg.nickname === identity.current.nickname;
+                const isMe = msg.nickname === identity.nickname;
                 return (
                   <div key={msg.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
                     <span className="text-[9px] mb-0.5 opacity-60 flex gap-1 items-center">

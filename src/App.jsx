@@ -27,7 +27,8 @@ import {
   SunDim,
   Warning,
   ShareNetwork,
-  TreeStructure
+  TreeStructure,
+  ChatCircleDots
 } from '@phosphor-icons/react';
 import './App.css';
 
@@ -1169,6 +1170,20 @@ export default function App() {
           </a>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Chat Button */}
+          <button
+            onClick={() => window.dispatchEvent(new Event('open-chat'))}
+            className="nav-item hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider theme-transition border hover:scale-105"
+            style={{ 
+              background: isDark ? 'rgba(252, 185, 0, 0.1)' : 'rgba(252, 185, 0, 0.15)',
+              borderColor: isDark ? 'rgba(252, 185, 0, 0.3)' : 'rgba(252, 185, 0, 0.4)',
+              color: '#fcb900',
+              fontFamily: '"FWC26", sans-serif'
+            }}
+          >
+            <ChatCircleDots size={16} weight="fill" />
+            Fan Chat
+          </button>
           {/* Knockout Bracket Icon */}
           <button
             onClick={() => setIsKnockoutOpen(true)}
@@ -1507,6 +1522,7 @@ export default function App() {
               <div className="relative w-full md:max-w-md">
                 <input
                   type="text"
+                  id="mobile-search-input"
                   placeholder="Search teams by name..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -2213,24 +2229,29 @@ export default function App() {
           { key: 'home', icon: <House size={20} weight={mobileTab === 'home' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Home' },
           { key: 'schedule', icon: <Calendar size={20} weight={mobileTab === 'schedule' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Schedule' },
           { key: 'standings', icon: <ChartBar size={20} weight={mobileTab === 'standings' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Standings' },
+          { key: 'chat', icon: <ChatCircleDots size={20} weight="fill" className="text-[#fcb900] theme-transition" />, label: 'Fan Chat' },
           { key: 'search', icon: <MagnifyingGlass size={20} weight={mobileTab === 'search' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Search' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => {
-              setMobileTab(tab.key);
-              const btn = document.activeElement;
-              if (btn) gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.2, ease: 'back.out(3)' });
-              
-              if (tab.key === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
-              if (tab.key === 'schedule') scheduleRef.current?.scrollIntoView({ behavior: 'smooth' });
-              if (tab.key === 'standings') standingsRef.current?.scrollIntoView({ behavior: 'smooth' });
-              if (tab.key === 'search') {
-                scheduleRef.current?.scrollIntoView({ behavior: 'smooth' });
-                setTimeout(() => {
-                  const input = document.getElementById('mobile-search-input');
-                  if (input) input.focus();
-                }, 400);
+              if (tab.key === 'chat') {
+                window.dispatchEvent(new Event('open-chat'));
+              } else {
+                setMobileTab(tab.key);
+                const btn = document.activeElement;
+                if (btn) gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.2, ease: 'back.out(3)' });
+                
+                if (tab.key === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (tab.key === 'schedule') scheduleRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (tab.key === 'standings') standingsRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (tab.key === 'search') {
+                  scheduleRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  setTimeout(() => {
+                    const input = document.getElementById('mobile-search-input');
+                    if (input) input.focus();
+                  }, 400);
+                }
               }
             }}
             className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all theme-transition"
@@ -2363,7 +2384,6 @@ export default function App() {
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      {/* Removed ChatTicker */}
 
       {isTeamShareOpen && (
         <StoryCardGenerator
@@ -2457,6 +2477,22 @@ export default function App() {
           >
             Match times shown in {timezone.flag} {timezone.shortLabel} ({timezone.offset}). Not affiliated with FIFA.
           </p>
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
+            <button
+              onClick={() => window.dispatchEvent(new Event('open-chat'))}
+              className="px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs border transition-all flex items-center gap-2 hover:scale-105"
+              style={{
+                background: isDark ? 'rgba(252, 185, 0, 0.1)' : 'rgba(252, 185, 0, 0.15)',
+                borderColor: isDark ? 'rgba(252, 185, 0, 0.3)' : 'rgba(252, 185, 0, 0.4)',
+                color: '#fcb900',
+                fontFamily: '"FWC26", sans-serif'
+              }}
+            >
+              <ChatCircleDots size={18} weight="fill" />
+              <span className="hidden sm:inline">Fan Chat</span>
+            </button>
+            <TimezoneSelector isDark={isDark} />
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             <span>© {new Date().getFullYear()} KICKOFF IST • FIFA World Cup 2026</span>
             <span className="hidden sm:inline opacity-30">•</span>
