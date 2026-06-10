@@ -175,8 +175,8 @@ function isToday(date) {
 
 function getMatchStatus(match) {
   const now = new Date();
-  const matchTime = match.utcDateString 
-    ? toIST(match.utcDateString).fullDate 
+  const matchTime = match.utcTimestamp 
+    ? new Date(match.utcTimestamp) 
     : new Date(match.local_date);
   const diffMinutes = (now - matchTime) / 60000;
 

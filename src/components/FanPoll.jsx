@@ -1,58 +1,62 @@
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ThumbsUp, Users } from '@phosphor-icons/react';
+import { doc, getDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 // Shared Storage Helpers
 async function loadPollData(matchId) {
   try {
-    if (window.storage && typeof window.storage.get === 'function') {
-      const result = await window.storage.get(`poll:match-${matchId}`, true);
-      if (result && result.value) {
-        return JSON.parse(result.value);
-      }
+    const docRef = doc(db, 'live_polls', `match-${matchId}`);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      return { 
+        teamAVotes: 0, 
+        teamBVotes: 0, 
+        totalVoters: 0 
+      };
     }
   } catch (err) {
-    console.error("Shared storage read error:", err);
+    console.error("Firestore read error:", err);
+    return { teamAVotes: 0, teamBVotes: 0, totalVoters: 0 };
   }
-  
-  // LocalStorage fallback
-  try {
-    const local = localStorage.getItem(`poll:match-${matchId}`);
-    if (local) return JSON.parse(local);
-  } catch (err) {
-    console.error("LocalStorage read error:", err);
-  }
-
-  // Seeded mock data based on matchId for full look
-  const seedVotesA = (matchId * 17) % 250 + 50;
-  const seedVotesB = (matchId * 23) % 250 + 50;
-  return { 
-    teamAVotes: seedVotesA, 
-    teamBVotes: seedVotesB, 
-    totalVoters: seedVotesA + seedVotesB 
-  };
 }
 
 async function submitVote(matchId, team) {
   // Check if already voted (localStorage)
-  if (localStorage.getItem(`voted:${matchId}`)) {
+  if (localStorage.getItem(`live_voted:${matchId}`)) {
     return { status: 'already_voted' };
   }
 
-  try {
-    const current = await loadPollData(matchId);
-    const updated = {
-      ...current,
-      [`team${team}Votes`]: (current[`team${team}Votes`] || 0) + 1,
-      totalVoters: (current.totalVoters || 0) + 1
-    };
+  const docRef = doc(db, 'live_polls', `match-${matchId}`);
 
-    if (window.storage && typeof window.storage.set === 'function') {
-      await window.storage.set(`poll:match-${matchId}`, JSON.stringify(updated), true);
-    }
+  try {
+    const updated = await runTransaction(db, async (transaction) => {
+      const docSnap = await transaction.get(docRef);
+      let current;
+      if (!docSnap.exists()) {
+        current = { 
+          teamAVotes: 0, 
+          teamBVotes: 0, 
+          totalVoters: 0 
+        };
+      } else {
+        current = docSnap.data();
+      }
+
+      const newData = {
+        ...current,
+        [`team${team}Votes`]: (current[`team${team}Votes`] || 0) + 1,
+        totalVoters: (current.totalVoters || 0) + 1
+      };
+
+      transaction.set(docRef, newData);
+      return newData;
+    });
     
-    localStorage.setItem(`poll:match-${matchId}`, JSON.stringify(updated));
-    localStorage.setItem(`voted:${matchId}`, team);
+    localStorage.setItem(`live_voted:${matchId}`, team);
     return { status: 'success', data: updated };
   } catch (err) {
     console.error("Voting failed:", err);
@@ -70,24 +74,28 @@ export function FanPoll({ matchId, teamA, teamB, flagA, flagB, isDark }) {
   const barRefB = useRef(null);
 
   useEffect(() => {
-    // Load initial data
-    const init = async () => {
-      const data = await loadPollData(matchId);
-      setPollData(data);
-      const voted = localStorage.getItem(`voted:${matchId}`);
-      if (voted) {
-        setUserVote(voted);
+    const voted = localStorage.getItem(`live_voted:${matchId}`);
+    if (voted) {
+      setUserVote(voted);
+    }
+
+    const docRef = doc(db, 'live_polls', `match-${matchId}`);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setPollData(docSnap.data());
+      } else {
+        setPollData({ 
+          teamAVotes: 0, 
+          teamBVotes: 0, 
+          totalVoters: 0 
+        });
       }
-    };
-    init();
+    }, (error) => {
+      console.error("Firestore snapshot error:", error);
+      loadPollData(matchId).then(setPollData);
+    });
 
-    // Live refresh every 30 seconds
-    const interval = setInterval(async () => {
-      const data = await loadPollData(matchId);
-      setPollData(data);
-    }, 30000);
-
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, [matchId]);
 
   // Animate vote bars on vote or data change
