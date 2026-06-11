@@ -84,7 +84,7 @@ self.addEventListener('fetch', (event) => {
   if (!url.protocol.startsWith('http')) return;
 
   /* API requests — Network first, fallback to cache */
-  if (url.origin === new URL(API_BASE).origin) {
+  if (url.pathname.startsWith(API_BASE)) {
     event.respondWith(networkFirstWithCache(request, CACHE_API));
     return;
   }

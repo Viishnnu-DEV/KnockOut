@@ -110,24 +110,31 @@ export default function ReminderPopup({ matches = [], teamMap = {} }) {
         }}
       />
 
-      {/* Card */}
-      <div
-        className="reminder-popup-card"
-        style={{
-          position: 'fixed',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 99999,
-          width: 'min(400px, calc(100vw - 32px))',
-          background: '#0d0d0d',
-          border: '1px solid rgba(0,255,135,0.25)',
-          borderRadius: 20,
-          overflow: 'hidden',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,135,0.1)',
-          fontFamily: 'DM Sans, sans-serif',
-        }}
-      >
-        {/* Top accent bar */}
+      {/* Wrapper to center content safely with GSAP */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        pointerEvents: 'none', // Let clicks pass through to overlay
+      }}>
+        {/* Card */}
+        <div
+          className="reminder-popup-card"
+          style={{
+            pointerEvents: 'auto', // Re-enable clicks on the card
+            width: 'min(400px, calc(100vw - 32px))',
+            background: '#0d0d0d',
+            border: '1px solid rgba(0,255,135,0.25)',
+            borderRadius: 20,
+            overflow: 'hidden',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,135,0.1)',
+            fontFamily: 'DM Sans, sans-serif',
+          }}
+        >
+          {/* Top accent bar */}
         <div style={{ height: 4, background: 'linear-gradient(90deg,#00FF87,#FFD700)' }} />
 
         {/* Content */}
@@ -315,6 +322,7 @@ export default function ReminderPopup({ matches = [], teamMap = {} }) {
           )}
 
         </div>
+      </div>
       </div>
 
       <style>{`
