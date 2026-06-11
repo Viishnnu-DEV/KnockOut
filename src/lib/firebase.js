@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
+import { getAuth } from "firebase/auth";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -21,3 +23,13 @@ export const db = getFirestore(app);
 
 // Initialize Realtime Database
 export const realtimeDb = getDatabase(app);
+
+// Initialize Auth
+export const auth = getAuth(app);
+
+// Initialize Messaging (only in browser)
+export const messaging = typeof window !== 'undefined' ? (async () => {
+  const supported = await isSupported();
+  if (supported) return getMessaging(app);
+  return null;
+})() : null;

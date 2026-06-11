@@ -65,8 +65,26 @@ export const TIMEZONES = [
 ];
 
 // Helper: get timezone by id
-export const getTimezone = (id) =>
-  TIMEZONES.find((tz) => tz.id === id) || TIMEZONES[0];
+export const getTimezone = (id) => {
+  const found = TIMEZONES.find((tz) => tz.id === id);
+  if (found) return found;
+
+  // Dynamically create a timezone object for unsupported timezones
+  try {
+    const parts = id.split('/');
+    const short = parts[parts.length - 1].replace(/_/g, ' ').substring(0, 4).toUpperCase();
+    return {
+      id,
+      label: `Local — ${id}`,
+      shortLabel: short,
+      offset: '',
+      flag: '📍',
+      region: 'Local'
+    };
+  } catch (e) {
+    return TIMEZONES[0];
+  }
+};
 
 // Helper: get popular timezones
 export const getPopularTimezones = () =>

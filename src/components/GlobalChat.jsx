@@ -126,7 +126,6 @@ export default function GlobalChat({ matches, isDark }) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: borderStyle }}>
             <div className="flex items-center gap-2">
-              <span className="text-xl">{identity.flag}</span>
               <div className="flex flex-col">
                 <span className="font-bold text-sm tracking-wide" style={{ fontFamily: '"FWC26", sans-serif' }}>Fan Zone</span>
                 <span className="text-[10px] uppercase" style={{ color: subTextStyle }}>{identity.nickname}</span>
@@ -175,7 +174,7 @@ export default function GlobalChat({ matches, isDark }) {
                 return (
                   <div key={msg.id} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
                     <span className="text-[9px] mb-0.5 opacity-60 flex gap-1 items-center">
-                      {!isMe && <span>{msg.flag} {msg.nickname}</span>}
+                      {!isMe && <span>{msg.nickname}</span>}
                     </span>
                     <div 
                       className={`px-3 py-2 rounded-2xl text-sm ${isMe ? 'rounded-tr-sm bg-[#fcb900] text-[#10164f]' : 'rounded-tl-sm'}`}

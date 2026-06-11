@@ -4,7 +4,7 @@
 // ============================================================
 import { useRef, useState } from 'react';
 import gsap from 'gsap';
-import { Star, MapPin, CalendarPlus, Bell, Flag, ThumbsUp, Moon, SunHorizon, Sun, CheckCircle, ShareNetwork } from '@phosphor-icons/react';
+import { Star, MapPin, CalendarPlus, Bell, Flag, ThumbsUp, Moon, SunHorizon, Sun, CheckCircle, ShareNetwork, CaretRight, X } from '@phosphor-icons/react';
 import { getMatchStatus, getStadiumInfo, to12Hour, formatDateLabel } from '../matchData';
 import { convertToTimezone, isMatchToday } from '../utils/timeConverter';
 import { useTimezone } from '../hooks/useTimezone';
@@ -221,29 +221,11 @@ export default function MatchCard({
 
   // GSAP hover handlers
   const handleEnter = () => {
-    gsap.to(cardRef.current, {
-      y: -12,
-      scale: 1.02,
-      boxShadow: '0 20px 60px rgba(0,255,135,0.25)',
-      duration: 0.35,
-      ease: 'power2.out'
-    });
-    // Scale up team flag images
-    gsap.to(cardRef.current.querySelectorAll('.team-flag'), {
-      scale: 1.12, duration: 0.3, ease: 'power2.out'
-    });
+    // pop-up animation removed
   };
 
   const handleLeave = () => {
-    gsap.to(cardRef.current, {
-      y: 0, scale: 1,
-      boxShadow: cardShadow,
-      duration: 0.4,
-      ease: 'power2.inOut'
-    });
-    gsap.to(cardRef.current.querySelectorAll('.team-flag'), {
-      scale: 1, duration: 0.3
-    });
+    // pop-up animation removed
   };
 
   // Google Calendar link
@@ -301,7 +283,7 @@ export default function MatchCard({
           <StatusBadge status={status} isDark={isDark} />
 
           {/* Group / Round & Sleep Impact Badges */}
-          <div className="flex items-center gap-1.5 mb-2 flex-wrap max-w-[calc(100%-85px)]">
+          <div className="flex flex-wrap items-center gap-1.5 mb-2 max-w-[calc(100%-85px)]">
             <span
               className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded-full theme-transition font-bold"
               style={{
@@ -320,7 +302,7 @@ export default function MatchCard({
               const SleepIcon = sleep.icon;
               return (
                 <span
-                  className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 theme-transition"
+                  className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 theme-transition whitespace-nowrap"
                   style={{
                     background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(16, 22, 79, 0.04)',
                     border: `1px solid ${sleep.color}40`,
@@ -368,10 +350,10 @@ export default function MatchCard({
             {match.home_score !== undefined && match.home_score !== null ? (
               <div 
                 className="flex items-center gap-2 px-3 font-bold text-xl sm:text-2xl"
-                style={{ fontFamily: '"FWC26", sans-serif', color: '#fcb900' }}
+                style={{ fontFamily: '"FWC26", sans-serif', color: textColor }}
               >
                 <span>{match.home_score}</span>
-                <span className="text-xs opacity-40 font-normal">X</span>
+                <span className="text-xs opacity-40 font-normal">-</span>
                 <span>{match.away_score}</span>
               </div>
             ) : (
@@ -433,11 +415,14 @@ export default function MatchCard({
               </div>
             </div>
             <div 
-              className="flex items-center justify-center gap-1.5 text-[11px] theme-transition"
+              className="flex items-center justify-center gap-1.5 text-[11px] theme-transition mt-1"
               style={{ color: subTextColor }}
             >
-              <MapPin size={12} className="flex-shrink-0" />
-              <span className="truncate max-w-[210px]">{match.stadium} • {match.city}</span>
+              <div className="flex items-center gap-1 hover:text-[#fcb900] transition-colors">
+                <MapPin size={12} className="flex-shrink-0" />
+                <span className="truncate max-w-[200px]">{match.stadium} • {match.city}</span>
+                <CaretRight size={12} className="opacity-70" />
+              </div>
             </div>
             {/* Timezone badge */}
             <div className="flex justify-center">
@@ -497,7 +482,7 @@ export default function MatchCard({
 
         {/* =================== BACK =================== */}
         <div
-          className="flip-card-back p-5 flex flex-col justify-center items-center gap-4 theme-transition"
+          className="flip-card-back p-5 flex flex-col justify-center items-center gap-4 theme-transition relative"
           style={{
             background: isDark ? 'rgba(8, 11, 40, 0.98)' : '#fcfbf9',
             border: `1px solid ${cardBorder}`,
@@ -506,6 +491,14 @@ export default function MatchCard({
             color: textColor,
           }}
         >
+          {/* Close button for back side */}
+          <button 
+            className="absolute top-4 right-4 p-2 opacity-60 hover:opacity-100 hover:scale-110 transition-all sm:hidden"
+            onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+            style={{ color: textColor }}
+          >
+            <X size={20} />
+          </button>
           <h4
             className="text-xl text-center px-2 theme-transition flex items-center justify-center gap-2"
             style={{ 

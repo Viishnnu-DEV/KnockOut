@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTimezone } from '../hooks/useTimezone';
 import { TIMEZONES, getPopularTimezones } from '../utils/timezones';
+import { GlobeHemisphereWest } from '@phosphor-icons/react';
 
 export default function TimezoneSelector({ isDark }) {
   const { timezone, timezoneId, changeTimezone } = useTimezone();
@@ -87,8 +88,8 @@ export default function TimezoneSelector({ isDark }) {
         }}
         title="Change timezone"
       >
-        <span style={{ fontSize: 16, display: 'flex', alignItems: 'center' }}>{timezone.flag}</span>
-        <span className="tz-label" style={{ fontWeight: 500 }}>{timezone.shortLabel}</span>
+        <GlobeHemisphereWest size={16} weight="bold" className="opacity-70" />
+        <span className="tz-label" style={{ fontWeight: 600, fontFamily: '"Noto Sans", sans-serif', marginTop: '1px' }}>{timezone.shortLabel}</span>
         <span className="tz-label" style={{ color: subTextColor, fontSize: 11 }}>
           {timezone.offset}
         </span>
@@ -208,7 +209,6 @@ export default function TimezoneSelector({ isDark }) {
                 onMouseEnter={(e) => { if (tz.id !== timezoneId) e.currentTarget.style.background = hoverBg; }}
                 onMouseLeave={(e) => { if (tz.id !== timezoneId) e.currentTarget.style.background = 'transparent'; }}
               >
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{tz.flag}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, color: textColor, fontWeight: tz.id === timezoneId ? 600 : 400, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span>{tz.shortLabel}</span>
@@ -236,13 +236,27 @@ export default function TimezoneSelector({ isDark }) {
             alignItems: 'center',
           }}>
             <span>Times auto-convert instantly</span>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={() => changeTimezone('Asia/Kolkata')}
+              onClick={() => {
+                try {
+                  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                  changeTimezone(browserTz);
+                } catch(e) {}
+              }}
               className="tz-reset-btn"
               style={{ background: 'none', border: 'none', color: accentColor, fontSize: 11, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', fontWeight: 600 }}
             >
+              Detect Local
+            </button>
+            <button
+              onClick={() => changeTimezone('Asia/Kolkata')}
+              className="tz-reset-btn"
+              style={{ background: 'none', border: 'none', color: textColor, opacity: 0.6, fontSize: 11, cursor: 'pointer', fontFamily: '"Noto Sans", sans-serif', fontWeight: 600 }}
+            >
               Reset to IST
             </button>
+          </div>
           </div>
         </div>
       )}

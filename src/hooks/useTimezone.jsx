@@ -6,9 +6,7 @@ const TimezoneContext = createContext(null);
 
 function detectBrowserTimezone() {
   try {
-    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const found = TIMEZONES.find((tz) => tz.id === browserTz);
-    return found ? browserTz : 'Asia/Kolkata';
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
   } catch {
     return 'Asia/Kolkata';
   }

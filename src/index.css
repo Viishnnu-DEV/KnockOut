@@ -143,7 +143,7 @@ body {
   text-align: center;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
-  will-change: transform;
+  border-radius: 1.5rem;
 }
 
 .flip-card.flipped .flip-card-inner {
@@ -461,7 +461,6 @@ body {
   display: inline-flex;
   white-space: nowrap;
   animation: marquee-scroll 42s linear infinite;
-  will-change: transform;
 }
 .marquee-track:hover {
   animation-play-state: paused;
@@ -585,10 +584,8 @@ body {
 /*  PARALLAX UTILITY                                           */
 /* ============================================================ */
 .parallax-bg {
-  will-change: transform;
 }
 .parallax-text {
-  will-change: transform;
 }
 
 /* ============================================================ */

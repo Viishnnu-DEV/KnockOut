@@ -3,7 +3,7 @@
    Handles: Offline caching, Background Sync, Push Notifications
    ============================================================ */
 
-const SW_VERSION = 'kickoff-ist-v1.0.1';
+const SW_VERSION = 'kickoff-ist-v1.0.2';
 
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_API = `${SW_VERSION}-api`;
@@ -20,12 +20,10 @@ const STATIC_ASSETS = [
 ];
 
 /* API endpoints to cache */
-const API_BASE = 'http://worldcup26.ir:3050';
+const API_BASE = '/api';
 const API_ENDPOINTS = [
-  `${API_BASE}/get/games`,
-  `${API_BASE}/get/teams`,
-  `${API_BASE}/get/groups`,
-  `${API_BASE}/get/stadiums`,
+  `${API_BASE}/matches`,
+  `${API_BASE}/teams`,
 ];
 
 /* Background sync tag names */
@@ -194,7 +192,7 @@ async function syncLiveScores() {
       return;
     }
 
-    const response = await fetch(`${API_BASE}/get/games`, {
+    const response = await fetch(`${API_BASE}/matches`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -250,10 +248,9 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',
     image: '/icons/notification-banner.png',
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [200],
     tag: `match-${data.matchId}`,
     renotify: true,
-    requireInteraction: true,
     silent: false,
     data: {
       matchId: data.matchId,
@@ -261,19 +258,7 @@ self.addEventListener('push', (event) => {
       teamA: data.teamA,
       teamB: data.teamB,
       timeIST: data.timeIST,
-    },
-    actions: [
-      {
-        action: 'view',
-        title: '📺 View Match',
-        icon: '/icons/action-view.png',
-      },
-      {
-        action: 'dismiss',
-        title: '✕ Dismiss',
-        icon: '/icons/action-dismiss.png',
-      },
-    ],
+    }
   };
 
   event.waitUntil(
@@ -319,11 +304,9 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification closed by user');
 });
 
-/* ── LOCAL NOTIFICATION SCHEDULING ────────────────────────── */
 /* Called on activate and periodically to schedule upcoming match alerts */
 async function scheduleNotificationCheck() {
-  /* Check every 5 minutes if there are matches in next 15 mins */
-  setInterval(checkAndFireNotifications, 5 * 60 * 1000);
+  /* No setInterval in SW to avoid abusive background execution heuristics */
   await checkAndFireNotifications();
 }
 
@@ -376,25 +359,20 @@ async function checkAndFireNotifications() {
       });
 
       await self.registration.showNotification(
-        `⚽ Match in 15 minutes! — KICKOFF IST`,
+        `Upcoming Match: KICKOFF IST`,
         {
           body: `${homeTeam} vs ${awayTeam} kicks off at ${istTime} IST`,
           icon: '/icons/icon-192x192.png',
           badge: '/icons/badge-72x72.png',
-          vibrate: [300, 100, 300, 100, 300],
+          vibrate: [200],
           tag: `match-alert-${match.id}`,
-          requireInteraction: true,
           data: {
             matchId: match.id,
             url: `/?match=${match.id}`,
             teamA: homeTeam,
             teamB: awayTeam,
             timeIST: istTime,
-          },
-          actions: [
-            { action: 'view', title: '📺 View Match' },
-            { action: 'dismiss', title: '✕ Later' },
-          ],
+          }
         }
       );
 
@@ -528,22 +506,17 @@ function handleScheduleReminders(reminders) {
 
     const timerId = setTimeout(() => {
       self.registration.showNotification(
-        `⚽ Kickoff in 15 minutes! — KICKOFF IST`,
+        `Match Starting Soon: KICKOFF IST`,
         {
           body: `${reminder.homeFlag} ${reminder.homeTeam} vs ${reminder.awayTeam} ${reminder.awayFlag}\n🕐 ${reminder.istTime} IST`,
           icon: '/icons/icon-192x192.png',
           badge: '/icons/badge-72x72.png',
           tag: `match-${reminder.matchId}`,
-          requireInteraction: true,
-          vibrate: [200, 100, 200, 100, 300],
+          vibrate: [200],
           data: {
             matchId: reminder.matchId,
             url: `/?match=${reminder.matchId}`,
-          },
-          actions: [
-            { action: 'view', title: '📺 Open Match' },
-            { action: 'dismiss', title: '✕ Dismiss' },
-          ],
+          }
         }
       );
       scheduledAlerts.delete(reminder.matchId);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ThumbsUp, Users } from '@phosphor-icons/react';
-import { doc, getDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 // Shared Storage Helpers
@@ -30,10 +30,24 @@ async function submitVote(matchId, team) {
     return { status: 'already_voted' };
   }
 
-  const docRef = doc(db, 'live_polls', `match-${matchId}`);
-
   try {
+    const { auth } = await import('../lib/firebase');
+    const { signInAnonymously } = await import('firebase/auth');
+    
+    if (!auth.currentUser) {
+      await signInAnonymously(auth);
+    }
+    const uid = auth.currentUser.uid;
+
+    const docRef = doc(db, 'live_polls', `match-${matchId}`);
+    const voteRef = doc(db, 'live_polls', `match-${matchId}`, 'votes', uid);
+
     const updated = await runTransaction(db, async (transaction) => {
+      const voteSnap = await transaction.get(voteRef);
+      if (voteSnap.exists()) {
+        throw new Error("already_voted_db");
+      }
+
       const docSnap = await transaction.get(docRef);
       let current;
       if (!docSnap.exists()) {
@@ -53,12 +67,22 @@ async function submitVote(matchId, team) {
       };
 
       transaction.set(docRef, newData);
+      
+      transaction.set(voteRef, {
+        team: team,
+        createdAt: serverTimestamp()
+      });
+
       return newData;
     });
     
     localStorage.setItem(`live_voted:${matchId}`, team);
     return { status: 'success', data: updated };
   } catch (err) {
+    if (err.message === "already_voted_db") {
+      localStorage.setItem(`live_voted:${matchId}`, team);
+      return { status: 'already_voted' };
+    }
     console.error("Voting failed:", err);
     return { status: 'error' };
   }
@@ -133,12 +157,12 @@ export function FanPoll({ matchId, teamA, teamB, flagA, flagB, isDark }) {
       {!userVote ? (
         <div className="space-y-2.5">
           <h5 className={`text-[10px] font-bold uppercase tracking-widest ${textCol}`}>
-            Who Wins? 🏆
+            Who Wins?
           </h5>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); handleVote('A'); }}
-              className="py-1.5 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:bg-emerald-500/10 hover:border-emerald-500/40"
+              className="flex-1 py-1.5 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:bg-emerald-500/10 hover:border-emerald-500/40"
               style={{
                 borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(16,22,79,0.1)',
                 color: isDark ? '#ffffff' : '#10164f',
@@ -149,7 +173,7 @@ export function FanPoll({ matchId, teamA, teamB, flagA, flagB, isDark }) {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleVote('B'); }}
-              className="py-1.5 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:bg-emerald-500/10 hover:border-emerald-500/40"
+              className="flex-1 py-1.5 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:bg-emerald-500/10 hover:border-emerald-500/40"
               style={{
                 borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(16,22,79,0.1)',
                 color: isDark ? '#ffffff' : '#10164f',
@@ -316,10 +340,10 @@ export function FanVerdictLeaderboard({ matches, isDark }) {
         }}
       >
         <h4 className="text-xs font-bold uppercase tracking-widest text-[#fcb900] mb-6" style={{ fontFamily: '"FWC26", sans-serif' }}>
-          🗳️ Full Fan Verdict Leaderboard (Closest Contests First)
+          Full Fan Verdict Leaderboard (Closest Contests First)
         </h4>
 
-        <div className="space-y-4 max-h-[500px] overflow-y-auto drawer-team-list pr-2">
+        <div className="space-y-4 max-h-[500px] overflow-y-auto drawer-team-list pr-2" data-lenis-prevent="true">
           {boardStats.map(({ match, pctA, pctB, total }, idx) => (
             <div 
               key={match.id}

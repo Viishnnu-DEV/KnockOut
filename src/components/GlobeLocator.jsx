@@ -26,8 +26,8 @@ const STADIUMS = [
 ];
 
 const INDIA_PIN = {
-  name: "You are here 🇮🇳",
-  city: "India",
+  name: "You are here",
+  city: "Local",
   country: "India",
   lat: 20.5937,
   lng: 78.9629,
@@ -285,9 +285,8 @@ export default function GlobeLocator({ isDark }) {
       {isMobile && (
         <div className="w-full max-w-md grid grid-cols-1 gap-3.5 mb-6 px-4 mt-6">
           <div className={`p-4 rounded-xl border text-center flex flex-col items-center gap-1 ${isDark ? 'border-pink-500/30 bg-pink-500/5 text-pink-400' : 'border-pink-500/20 bg-pink-500/[0.03] text-pink-700'}`}>
-            <span className="text-xl">🇮🇳</span>
-            <h5 className="font-bold text-xs uppercase tracking-wider">Watching from India</h5>
-            <p className="text-[10px] opacity-75">All match dates/times converted to IST (+5:30) automatically.</p>
+            <h5 className="font-bold text-xs uppercase tracking-wider">Watching Locally</h5>
+            <p className="text-[10px] opacity-75">All match dates/times converted automatically.</p>
           </div>
           {visibleStadiums.map((s) => (
             <button
@@ -306,12 +305,21 @@ export default function GlobeLocator({ isDark }) {
               </span>
             </button>
           ))}
-          {!showAllStadiums && (
+          {!showAllStadiums ? (
             <button
               onClick={() => setShowAllStadiums(true)}
               className={`mt-2 py-3 w-full rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors ${isDark ? 'border-white/20 bg-white/5 hover:bg-white/10 text-white' : 'border-[#10164f]/20 bg-[#10164f]/5 hover:bg-[#10164f]/10 text-[#10164f]'}`}
             >
               View All Stadiums
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setShowAllStadiums(false);
+              }}
+              className={`mt-2 py-3 w-full rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-white/20 bg-white/5 hover:bg-white/10 text-white' : 'border-[#10164f]/20 bg-[#10164f]/5 hover:bg-[#10164f]/10 text-[#10164f]'}`}
+            >
+              <X size={16} /> Close Stadium List
             </button>
           )}
 
@@ -380,12 +388,19 @@ export default function GlobeLocator({ isDark }) {
               );
             })}
           </div>
-          {!showAllStadiums && (
+          {!showAllStadiums ? (
             <button
               onClick={() => setShowAllStadiums(true)}
               className={`mt-2 py-3 px-8 rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${isDark ? 'border-white/20 bg-white/5 hover:bg-white/10 text-white' : 'border-[#10164f]/20 bg-[#10164f]/5 hover:bg-[#10164f]/10 text-[#10164f]'}`}
             >
               View All Stadiums
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAllStadiums(false)}
+              className={`mt-2 py-3 px-8 rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-2 ${isDark ? 'border-white/20 bg-white/5 hover:bg-white/10 text-white' : 'border-[#10164f]/20 bg-[#10164f]/5 hover:bg-[#10164f]/10 text-[#10164f]'}`}
+            >
+              <X size={16} /> Close List
             </button>
           )}
         </div>

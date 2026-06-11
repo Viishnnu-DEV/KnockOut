@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fan Polls Aggregate
+    match /live_polls/{matchId} {
+      allow read: if true;
+      
+      // Allow creation of the aggregate document if it doesn't exist
+      allow create: if request.auth != null
+                    && request.resource.data.teamAVotes >= 0 
+                    && request.resource.data.teamBVotes >= 0
+                    && request.resource.data.totalVoters == request.resource.data.teamAVotes + request.resource.data.teamBVotes;
+
+      // Allow updates to aggregate ONLY if they also create a vote document in the subcollection
+      // in the same transaction, ensuring 1 vote per user.
+      allow update: if request.auth != null
+                    && (
+                      (request.resource.data.teamAVotes == resource.data.teamAVotes + 1 && request.resource.data.teamBVotes == resource.data.teamBVotes) ||
+                      (request.resource.data.teamBVotes == resource.data.teamBVotes + 1 && request.resource.data.teamAVotes == resource.data.teamAVotes)
+                    )
+                    && request.resource.data.totalVoters == resource.data.totalVoters + 1
+                    && existsAfter(/databases/$(database)/documents/live_polls/$(matchId)/votes/$(request.auth.uid))
+                    && !exists(/databases/$(database)/documents/live_polls/$(matchId)/votes/$(request.auth.uid));
+    }
+
+    // Individual Votes (Subcollection)
+    match /live_polls/{matchId}/votes/{userId} {
+      // Users can only read their own vote
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Users can only write their own vote document, and it must contain a timestamp
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.data.team in ['A', 'B']
+                    && request.resource.data.createdAt == request.time;
+    }
+    
+    // Global Chat Rooms
+    match /chat/{matchId}/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll(['nickname', 'flag', 'text', 'timestamp'])
+                    && request.resource.data.text.size() <= 200;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

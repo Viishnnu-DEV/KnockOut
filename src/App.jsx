@@ -28,7 +28,8 @@ import {
   Warning,
   ShareNetwork,
   TreeStructure,
-  ChatCircleDots
+  ChatCircleDots,
+  Bell
 } from '@phosphor-icons/react';
 import './App.css';
 
@@ -50,6 +51,7 @@ import ISTSleepAlert from './components/ISTSleepAlert';
 import StoryCardGenerator from './components/StoryCardGenerator';
 import PWAManager from './components/PWAManager';
 import GlobalChat from './components/GlobalChat';
+import ReminderSettingsModal from './components/ReminderSettingsModal';
 import TimezoneSelector from './components/TimezoneSelector';
 import KnockoutBracket from './components/KnockoutBracket';
 import { useCachedMatches, idbSet } from './hooks/useIndexedDB';
@@ -395,6 +397,7 @@ export default function App() {
   const [shareMatch, setShareMatch] = useState(null);
   const [openGroups, setOpenGroups] = useState({});
   const [mobileTab, setMobileTab] = useState('schedule');
+  const [showReminders, setShowReminders] = useState(false);
   const [isKnockoutOpen, setIsKnockoutOpen] = useState(false);
 
   // --- New Feature States ---
@@ -977,18 +980,27 @@ export default function App() {
       });
     };
 
+    const openReminders = () => {
+      setShowReminders(true);
+    };
+    window.addEventListener('open-reminders', openReminders);
+
     if (lenis) {
       lenis.on('scroll', onScroll);
-      return () => lenis.off('scroll', onScroll);
+      return () => {
+        lenis.off('scroll', onScroll);
+        window.removeEventListener('open-reminders', openReminders);
+      };
     } else {
       const timer = setTimeout(() => {
         if (window.lenis) {
           window.lenis.on('scroll', onScroll);
         }
-      }, 50);
+      }, 500);
       return () => {
         clearTimeout(timer);
         if (window.lenis) window.lenis.off('scroll', onScroll);
+        window.removeEventListener('open-reminders', openReminders);
       };
     }
   }, [preloaderDone]);
@@ -1151,7 +1163,7 @@ export default function App() {
       </div>
 
       {/* ====== TOP BAR ====== */}
-      <header ref={headerRef} className="header fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-8 py-3 theme-transition">
+      <header ref={headerRef} className="header fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-2 sm:px-8 py-2.5 sm:py-3 theme-transition">
         <div className="flex items-center gap-1.5 sm:gap-3">
           <a href="/" className="nav-item flex items-center gap-2 theme-transition" style={{ color: isDark ? '#ffffff' : '#10164f' }}>
             <SoccerBall size={24} weight="duotone" className="theme-transition flex-shrink-0" />
@@ -1169,15 +1181,15 @@ export default function App() {
             </span>
           </a>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Chat Button */}
           <button
             onClick={() => window.dispatchEvent(new Event('open-chat'))}
             className="nav-item hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider theme-transition border hover:scale-105"
             style={{ 
-              background: isDark ? 'rgba(252, 185, 0, 0.1)' : 'rgba(252, 185, 0, 0.15)',
-              borderColor: isDark ? 'rgba(252, 185, 0, 0.3)' : 'rgba(252, 185, 0, 0.4)',
-              color: '#fcb900',
+              background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(16, 22, 79, 0.05)',
+              border: `1px solid ${inputBorder}`,
+              color: textColor,
               fontFamily: '"FWC26", sans-serif'
             }}
           >
@@ -1228,7 +1240,7 @@ export default function App() {
           {/* Favorite Teams Drawer Trigger */}
           <button
             onClick={() => setIsFavDrawerOpen(true)}
-            className="nav-item button-slide px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 theme-transition flex items-center justify-center gap-1.5 cursor-pointer h-[32px] sm:h-[36px] shrink-0"
+            className="nav-item button-slide px-2.5 sm:px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 theme-transition flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer w-[32px] sm:w-auto h-[32px] sm:h-[36px] shrink-0"
             style={{
               background: favorites.length > 0 ? 'rgba(16, 185, 129, 0.12)' : inputBg,
               border: `1px solid ${favorites.length > 0 ? 'rgba(16, 185, 129, 0.3)' : inputBorder}`,
@@ -1246,9 +1258,6 @@ export default function App() {
                 </span>
               </span>
             </div>
-            <span className="sm:hidden leading-none mt-px">
-              Teams
-            </span>
           </button>
           {/* Theme toggle */}
           <button
@@ -1813,7 +1822,7 @@ export default function App() {
                   return (
                     <div key={slot} className="chart-row">
                       <div className="chart-row-header" style={{ color: textColor }}>
-                        <span className="flex items-center gap-1.5 font-bold">
+                        <span className="flex flex-wrap items-center gap-1.5 font-bold">
                           {(() => {
                             const IconComp = icon;
                             return <IconComp size={16} className="text-current" />;
@@ -1821,7 +1830,7 @@ export default function App() {
                           <span>{slot}</span>
                           <span className="opacity-50 font-normal text-[10px]">({desc})</span>
                           {badge && (
-                            <span className="text-[8px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-1.5 py-0.5 rounded-full font-bold ml-1.5 flex items-center gap-1">
+                            <span className="text-[8px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-1.5 py-0.5 rounded-full font-bold ml-1.5 flex items-center gap-1 whitespace-nowrap">
                               <ThumbsUp size={8} weight="fill" />
                               <span>{badge}</span>
                             </span>
@@ -1879,14 +1888,14 @@ export default function App() {
                       <div key={slot} className="space-y-4">
                         <div className="border-b pb-2 flex flex-col md:flex-row md:items-end justify-between gap-2" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(16,22,79,0.1)' }}>
                           <div>
-                            <h3 className="text-lg font-bold flex items-center gap-2" style={{ fontFamily: '"FWC26", sans-serif', color: textColor }}>
+                            <h3 className="text-lg font-bold flex flex-wrap items-center gap-2" style={{ fontFamily: '"FWC26", sans-serif', color: textColor }}>
                               {(() => {
                                 const IconComp = icon;
                                 return <IconComp size={20} className="text-[#fcb900] flex-shrink-0" />;
                               })()}
                               <span>{label}</span>
                               {highlight && (
-                                <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-1 flex items-center gap-1">
+                                <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-1 flex items-center gap-1 whitespace-nowrap">
                                   <ThumbsUp size={10} weight="fill" />
                                   <span>Great for India</span>
                                 </span>
@@ -2226,17 +2235,19 @@ export default function App() {
         }}
       >
         {[
-          { key: 'home', icon: <House size={20} weight={mobileTab === 'home' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Home' },
+          { key: 'search', icon: <MagnifyingGlass size={20} weight={mobileTab === 'search' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Search' },
           { key: 'schedule', icon: <Calendar size={20} weight={mobileTab === 'schedule' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Schedule' },
           { key: 'standings', icon: <ChartBar size={20} weight={mobileTab === 'standings' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Standings' },
-          { key: 'chat', icon: <ChatCircleDots size={20} weight="fill" className="text-[#fcb900] theme-transition" />, label: 'Fan Chat' },
-          { key: 'search', icon: <MagnifyingGlass size={20} weight={mobileTab === 'search' ? 'fill' : 'regular'} className="theme-transition" />, label: 'Search' },
+          { key: 'chat', icon: <ChatCircleDots size={20} weight="regular" className="theme-transition" />, label: 'Fan Chat' },
+          { key: 'reminders', icon: <Bell size={20} weight="regular" className="theme-transition" />, label: 'Reminders' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => {
               if (tab.key === 'chat') {
                 window.dispatchEvent(new Event('open-chat'));
+              } else if (tab.key === 'reminders') {
+                window.dispatchEvent(new Event('open-reminders'));
               } else {
                 setMobileTab(tab.key);
                 const btn = document.activeElement;
@@ -2477,23 +2488,7 @@ export default function App() {
           >
             Match times shown in {timezone.flag} {timezone.shortLabel} ({timezone.offset}). Not affiliated with FIFA.
           </p>
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full md:w-auto">
-            <button
-              onClick={() => window.dispatchEvent(new Event('open-chat'))}
-              className="px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs border transition-all flex items-center gap-2 hover:scale-105"
-              style={{
-                background: isDark ? 'rgba(252, 185, 0, 0.1)' : 'rgba(252, 185, 0, 0.15)',
-                borderColor: isDark ? 'rgba(252, 185, 0, 0.3)' : 'rgba(252, 185, 0, 0.4)',
-                color: '#fcb900',
-                fontFamily: '"FWC26", sans-serif'
-              }}
-            >
-              <ChatCircleDots size={18} weight="fill" />
-              <span className="hidden sm:inline">Fan Chat</span>
-            </button>
-            <TimezoneSelector isDark={isDark} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-2">
             <span>© {new Date().getFullYear()} KICKOFF IST • FIFA World Cup 2026</span>
             <span className="hidden sm:inline opacity-30">•</span>
             <span className="flex items-center gap-2">
@@ -2511,6 +2506,7 @@ export default function App() {
 
       <ReminderPopup matches={matchesData} teamMap={{}} />
       <GlobalChat matches={matchesData} isDark={isDark} />
+      <ReminderSettingsModal isOpen={showReminders} onClose={() => setShowReminders(false)} isDark={isDark} />
     </div>
   );
 }

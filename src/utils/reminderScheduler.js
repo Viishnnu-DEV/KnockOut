@@ -135,22 +135,17 @@ export async function fireNotification(reminder) {
     const reg = await navigator.serviceWorker?.ready;
     if (reg) {
       await reg.showNotification(
-        `⚽ Kickoff in 15 min! — KICKOFF IST`,
+        `Match Starting Soon: KICKOFF IST`,
         {
           body: `${reminder.homeFlag} ${reminder.homeTeam} vs ${reminder.awayTeam} ${reminder.awayFlag}\n🕐 ${reminder.istTime} IST`,
           icon: '/icons/icon-192x192.png',
           badge: '/icons/badge-72x72.png',
           tag: `match-${reminder.matchId}`,
-          requireInteraction: true,
-          vibrate: [200, 100, 200, 100, 300],
+          vibrate: [200],
           data: {
             matchId: reminder.matchId,
             url: `/?match=${reminder.matchId}`,
-          },
-          actions: [
-            { action: 'view', title: '📺 Open Match' },
-            { action: 'dismiss', title: '✕ Dismiss' },
-          ],
+          }
         }
       );
       return;
@@ -158,7 +153,7 @@ export async function fireNotification(reminder) {
   } catch {}
 
   // Fallback: basic Notification API
-  new Notification(`⚽ Match in 15 minutes!`, {
+  new Notification(`Match Starting Soon`, {
     body: `${reminder.homeFlag} ${reminder.homeTeam} vs ${reminder.awayTeam} ${reminder.awayFlag} — ${reminder.istTime} IST`,
     icon: '/icons/icon-192x192.png',
     tag: `match-${reminder.matchId}`,

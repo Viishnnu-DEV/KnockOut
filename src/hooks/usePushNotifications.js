@@ -5,16 +5,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { idbGet, idbSet } from './useIndexedDB';
+import { messaging, db, auth } from '../lib/firebase';
+import { getToken } from 'firebase/messaging';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
-/* Replace with your actual VAPID public key from web-push */
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
-}
+/* The VAPID key will be provided via env or hardcoded by the user */
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || 'YOUR_VAPID_PUBLIC_KEY_HERE';
 
 export function usePushNotifications() {
   const [permission, setPermission] = useState(
@@ -53,27 +49,44 @@ export function usePushNotifications() {
     }
   }, []);
 
-  /* ── Subscribe to push ───────────────────────────────────── */
+  /* ── Subscribe to push (FCM) ───────────────────────────────────── */
   const subscribe = useCallback(async () => {
     try {
+      if (!messaging) {
+        console.warn('[PUSH] FCM not supported or initialized');
+        return null;
+      }
+      
       const reg = await navigator.serviceWorker.ready;
 
-      /* Check if VAPID key is configured */
       if (VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') {
-        console.warn('[PUSH] VAPID key not configured — using local notifications only');
+        console.warn('[PUSH] VAPID key not configured — push will not work');
         return null;
       }
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      const currentToken = await getToken(messaging, { 
+        vapidKey: VAPID_PUBLIC_KEY,
+        serviceWorkerRegistration: reg
       });
 
-      setSubscription(sub);
-      await idbSet('push_subscription', JSON.stringify(sub));
+      if (currentToken) {
+        setSubscription(currentToken);
+        await idbSet('fcm_token', currentToken);
+        
+        // Save to Firestore
+        const uid = auth?.currentUser?.uid || 'anonymous';
+        await setDoc(doc(db, 'fcm_tokens', currentToken), {
+          token: currentToken,
+          uid: uid,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
 
-      console.log('[PUSH] Subscribed:', sub.endpoint);
-      return sub;
+        console.log('[PUSH] FCM Token obtained:', currentToken);
+        return currentToken;
+      } else {
+        console.warn('[PUSH] No registration token available.');
+        return null;
+      }
     } catch (err) {
       console.error('[PUSH] Subscribe failed:', err);
       return null;
@@ -83,10 +96,14 @@ export function usePushNotifications() {
   /* ── Unsubscribe ─────────────────────────────────────────── */
   const unsubscribe = useCallback(async () => {
     if (!subscription) return;
-    await subscription.unsubscribe();
+    try {
+      await deleteDoc(doc(db, 'fcm_tokens', subscription));
+    } catch (e) {
+      console.error("Failed to delete token from DB", e);
+    }
     setSubscription(null);
-    await idbSet('push_subscription', null);
-    console.log('[PUSH] Unsubscribed');
+    await idbSet('fcm_token', null);
+    console.log('[PUSH] Unsubscribed from FCM');
   }, [subscription]);
 
   /* ── Request permission ──────────────────────────────────── */
@@ -183,14 +200,10 @@ export function usePushNotifications() {
 
   /* ── Load subscription on mount ───────────────────────────── */
   useEffect(() => {
-    if (isSupported) {
-      navigator.serviceWorker.ready.then((reg) => {
-        reg.pushManager.getSubscription().then((sub) => {
-          if (sub) setSubscription(sub);
-        });
-      });
-    }
-  }, [isSupported]);
+    idbGet('fcm_token').then(token => {
+      if (token) setSubscription(token);
+    });
+  }, []);
 
   return {
     permission,

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   hasReminder, scheduleOneReminder, cancelReminder
 } from '../utils/reminderScheduler';
+import { Bell, BellSlash, Spinner, CheckCircle } from '@phosphor-icons/react';
 
 export default function MatchReminderBell({ match, teamA, teamB, isDark = true }) {
   const [active, setActive] = useState(false);
@@ -12,6 +13,18 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
   const now = new Date();
   const isPast = matchTime <= now;
   const isFinished = match.finished;
+  
+  const [pref, setPref] = useState('15_min');
+
+  useEffect(() => {
+    const checkPref = () => {
+      const saved = localStorage.getItem('kickoff_reminder_pref') || '15_min';
+      setPref(saved);
+    };
+    checkPref();
+    window.addEventListener('reminder-pref-changed', checkPref);
+    return () => window.removeEventListener('reminder-pref-changed', checkPref);
+  }, []);
 
   // Load state on mount
   useEffect(() => {
@@ -41,7 +54,7 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
         timeZone: 'Asia/Kolkata',
         hour: '2-digit', minute: '2-digit', hour12: true,
       });
-      const alertTime = new Date(matchTime.getTime() - 15 * 60 * 1000);
+      const alertTime = new Date(matchTime.getTime() - (pref === '1_hour' ? 60 : 15) * 60 * 1000);
 
       if (!active) {
         await scheduleOneReminder({
@@ -71,8 +84,8 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
     <div style={{ position: 'relative', display: 'inline-flex' }}>
       <button
         onClick={toggle}
-        disabled={loading}
-        title={active ? 'Cancel reminder' : 'Set reminder — 15 min before kickoff'}
+        disabled={loading || pref === 'off'}
+        title={pref === 'off' ? 'Reminders are disabled globally' : active ? 'Cancel reminder' : `Set reminder — ${pref === '1_hour' ? '1 hour' : '15 min'} before kickoff`}
         style={{
           display: 'flex', alignItems: 'center', gap: 5,
           padding: '5px 10px',
@@ -82,7 +95,7 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
           border: `1px solid ${active
             ? 'rgba(0,255,135,0.35)'
             : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(16,22,79,0.15)')}`,
-          borderRadius: 20, cursor: isPast ? 'default' : 'pointer',
+          borderRadius: 20, cursor: isPast || pref === 'off' ? 'default' : 'pointer',
           transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
           fontFamily: 'DM Sans, sans-serif',
           transform: justSet ? 'scale(1.1)' : 'scale(1)',
@@ -94,16 +107,18 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
           fontSize: 14,
           filter: active ? 'none' : 'grayscale(0.5)',
           animation: justSet ? 'bellBounce 0.4s ease' : 'none',
-          display: 'inline-block',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}>
-          {loading ? '⏳' : active ? '🔔' : '🔕'}
+          {loading ? <Spinner size={14} className="animate-spin" /> : active ? <Bell size={14} weight="fill" /> : <BellSlash size={14} />}
         </span>
         {/* Label */}
         <span style={{
           fontSize: 11, fontWeight: 500,
-          color: active ? (isDark ? '#00FF87' : '#047857') : (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(16,22,79,0.55)'),
+          color: pref === 'off' ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(16,22,79,0.3)') : active ? (isDark ? '#00FF87' : '#047857') : (isDark ? 'rgba(255,255,255,0.45)' : 'rgba(16,22,79,0.55)'),
         }}>
-          {justSet ? 'Reminder set!' : active ? 'Reminder on' : 'Remind me'}
+          {pref === 'off' ? 'Disabled' : justSet ? 'Reminder set!' : active ? 'Reminder on' : 'Remind me'}
         </span>
       </button>
 
@@ -113,13 +128,16 @@ export default function MatchReminderBell({ match, teamA, teamB, isDark = true }
           position: 'absolute', bottom: 'calc(100% + 8px)',
           left: '50%', transform: 'translateX(-50%)',
           background: '#00FF87', color: '#050508',
-          fontSize: 11, fontWeight: 600, padding: '4px 10px',
+          fontSize: 11, fontWeight: 600, padding: '6px 12px',
           borderRadius: 20, whiteSpace: 'nowrap',
           boxShadow: '0 4px 12px rgba(0,255,135,0.4)',
           animation: 'toastUp 0.3s ease',
           pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
         }}>
-          ✅ 15 min reminder set!
+          <CheckCircle size={14} weight="fill" /> {pref === '1_hour' ? '1 hour' : '15 min'} reminder set!
         </div>
       )}
 

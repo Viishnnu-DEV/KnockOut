@@ -130,68 +130,6 @@ export default function PWAManager({ matches = [], starredTeams = [], starredMat
         </div>
       )}
 
-      {/* ── Update available toast ─────────────────────────────── */}
-      {showUpdateToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: 80,
-          right: 16,
-          zIndex: 99998,
-          background: '#0d0d0d',
-          border: '1px solid rgba(0,255,135,0.3)',
-          borderRadius: 12,
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          maxWidth: 300,
-          fontFamily: 'DM Sans, sans-serif',
-          animation: 'slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-        }}>
-          <span style={{ fontSize: 20 }}>🔄</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', marginBottom: 2 }}>
-              Update available
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
-              New match data ready
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <button
-              onClick={applyUpdate}
-              style={{
-                background: '#00FF87',
-                color: '#050508',
-                border: 'none',
-                borderRadius: 6,
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              Update
-            </button>
-            <button
-              onClick={() => setShowUpdateToast(false)}
-              style={{
-                background: 'transparent',
-                color: 'rgba(255,255,255,0.4)',
-                border: 'none',
-                fontSize: 11,
-                cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              Later
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── Install banner ─────────────────────────────────────── */}
       {showInstallBanner && !isInstalled && (
         <div style={{
